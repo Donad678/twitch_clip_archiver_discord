@@ -88,7 +88,7 @@ namespace TwitchClipAutodownloader
                 do
                 {
 
-                    string url = "https://api.twitch.tv/helix/clips?broadcaster_id=94267141&started_at=";
+                    string url = "https://api.twitch.tv/helix/clips?broadcaster_id=" + configuration.GetSettings("Broadcaster_ID") + "&started_at=";
                     if (PaginationCounter == 0)
                     {
                         PaginationCounter++;
