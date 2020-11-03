@@ -20,6 +20,10 @@ namespace TwitchClipAutodownloader
             client.Log += Log;
             await client.LoginAsync(TokenType.Bot, token);
             await client.StartAsync();
+            do
+            {
+                await Task.Delay(500);
+            } while (client.ConnectionState != ConnectionState.Connected);
             server = client.GetGuild(serverId) as SocketGuild;
             channel = server.GetChannel(channelId) as SocketTextChannel;
         }

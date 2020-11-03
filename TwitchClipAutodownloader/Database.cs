@@ -34,7 +34,7 @@ namespace TwitchClipAutodownloader
 
         public async Task<ulong> GetNumberOfArchivedClips()
         {
-            return 0;
+            return 1;
         }
 
         public async Task<ClipInfo> DatabaseToClip()
