@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "TwitchClipAutodownloader": {
+      "commandName": "Project",
+      "nativeDebugging": true
+    }
+  }
+}

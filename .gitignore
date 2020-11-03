@@ -3,3 +3,7 @@
 ################################################################################
 
 /TwitchClipAutodownloader/bin/Debug/netcoreapp3.1
+/TwitchClipAutodownloader/obj
+/TwitchClipAutodownloader/appsettings.json
+/TwitchClipAutodownloader/client_id.json
+/TwitchClipAutodownloader/client_secret.json

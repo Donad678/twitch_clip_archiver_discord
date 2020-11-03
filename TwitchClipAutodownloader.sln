@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30611.23
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TwitchClipAutodownloader", "TwitchClipAutodownloader\TwitchClipAutodownloader.csproj", "{12304875-9800-4173-98D3-5C8235A64350}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{12304875-9800-4173-98D3-5C8235A64350}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{12304875-9800-4173-98D3-5C8235A64350}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{12304875-9800-4173-98D3-5C8235A64350}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{12304875-9800-4173-98D3-5C8235A64350}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {991F9E4E-07FF-42EF-A078-D390A20E3E21}
+	EndGlobalSection
+EndGlobal
