@@ -12,7 +12,7 @@ namespace TwitchClipAutodownloader
         string connectionString = "";
 
         public Database(string passedConnectionString)
-        {
+        {            
             connectionString = passedConnectionString;
         }
 

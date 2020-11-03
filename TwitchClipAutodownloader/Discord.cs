@@ -30,7 +30,7 @@ namespace TwitchClipAutodownloader
 
         public async Task UploadClipToDiscord(string filepath, ClipInfo clip)
         {
-            await channel.SendFileAsync(filepath, clip.title);
+            await channel.SendFileAsync(filepath, "", false, CreateEmbed(clip));
         }
 
         public async Task StopDiscordBot()
@@ -42,6 +42,30 @@ namespace TwitchClipAutodownloader
         {
             Console.WriteLine(msg.ToString());
             return Task.CompletedTask;
+        }
+
+        private Embed CreateEmbed(ClipInfo clip)
+        {
+            EmbedBuilder clipInfo = new EmbedBuilder()
+            {
+                Description = clip.title
+            };
+            EmbedFieldBuilder field1 = new EmbedFieldBuilder()
+            {
+                Name = "Creator",
+                Value = clip.creator_name,
+                IsInline = true
+            };
+            EmbedFieldBuilder field2 = new EmbedFieldBuilder()
+            {
+                Name = "Created at",
+                Value = clip.created_at,
+                IsInline = true
+            };
+            clipInfo.AddField(field1);
+            clipInfo.AddField(field2);
+            Embed finished = clipInfo.Build();
+            return finished;
         }
     }
 }

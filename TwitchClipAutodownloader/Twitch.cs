@@ -145,6 +145,7 @@ namespace TwitchClipAutodownloader
                     
                     await database.ClipToDatabase(clip);
                 }
+                catch { }
                 finally
                 {
                     if (File.Exists(tempPath))
