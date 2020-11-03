@@ -107,6 +107,7 @@ namespace TwitchClipAutodownloader
                 } while (streamTwitch.pagination.cursor != null);
                 finalDate = endDate;
             } while (getAllClips && (currentTime.Month != 5 || currentTime.Day != 25 || currentTime.Year != 2016));
+            // Filter out duplicates
             clips = clips.Distinct().ToList();
             Console.WriteLine("done getting clips " + finalDate);
             Console.WriteLine("Got " + clips.Count + " Clips");

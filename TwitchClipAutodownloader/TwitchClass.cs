@@ -9,7 +9,7 @@ namespace TwitchClipAutodownloader
     public class ClipInfo
     {
         /// <summary>
-        /// 
+        /// The Clip object
         /// </summary>
         public string id { get; set; }
         public string url { get; set; }
@@ -34,13 +34,13 @@ namespace TwitchClipAutodownloader
             {
                 return false;
             }
-
+            // Check if id of both objects equal
             return this.id.Equals(item.id);
         }
 
         public override int GetHashCode()
         {
-            //Calculate the hash code for the product.
+            //Get the hash code from the id.
             return id.GetHashCode();
         }
 
@@ -53,6 +53,7 @@ namespace TwitchClipAutodownloader
 
     public class TwitchClass
     {
+        // Object used for parsing Json to C#
         public List<ClipInfo> data { get; set; }
         public Pagination pagination { get; set; }
     }    
