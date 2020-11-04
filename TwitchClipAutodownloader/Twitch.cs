@@ -25,7 +25,11 @@ namespace TwitchClipAutodownloader
             DelegatingHandler handler = TimeLimiter.GetFromMaxCountByInterval(750, TimeSpan.FromMinutes(1)).AsDelegatingHandler();
             twitch = new HttpClient(handler);
         }
-
+        /// <summary>
+        /// Set up intervalls to search for clips
+        /// </summary>
+        /// <param name="clientPassthrough"></param>
+        /// <param name="configuration"></param>
         public async void ClipSearch(Discord clientPassthrough, IConfigurationRoot configuration)
         {
             // Set headers for the twitch api request
@@ -39,18 +43,33 @@ namespace TwitchClipAutodownloader
             {
                 // Get the number of archived clips
                 await database.OpenDBConnection();
-                ulong numberOfArchivedClips = await database.GetNumberOfArchivedClips();
+                int numberOfArchivedClips = await database.GetNumberOfArchivedClips();
                 await database.CloseDBConnection();
 
                 // If database is empty, then first run of the application, get all past clips
                 if (numberOfArchivedClips == 0)
                 {
-                    await ConfigClipSearch(fiveMinutesAgo, database, configuration, clientPassthrough, true);
+                    await ConfigClipSearch(database, configuration, clientPassthrough, true);
                 }
+                bool did24h = false;
                 do
                 {
-                    ConfigClipSearch(fiveMinutesAgo, database, configuration, clientPassthrough, false);
-                    await Task.Delay(timeToSearch * 60000);
+                    // Check if the time is around midnight to make a test check if every clip of the day is archived
+                    if ((DateTime.Now.Hour == 23 && DateTime.Now.Minute > 30) || (DateTime.Now.Hour == 0 && DateTime.Now.Minute < 1))
+                    {                    
+                        await ConfigClipSearch(database, configuration, clientPassthrough, false, true);
+                    }
+                    else
+                    {
+                        // Push it in the background
+                        Task.Run(async () =>
+                        {
+                            await ConfigClipSearch(database, configuration, clientPassthrough, false);
+                        });
+                        
+                    }
+                    await Task.Delay(30 * 60000);
+
                 } while (true);
             }
             finally
@@ -60,26 +79,40 @@ namespace TwitchClipAutodownloader
             }
 
         }
-
-        private async Task ConfigClipSearch(DateTime? fiveMinutesAgo, Database database, IConfigurationRoot configuration, Discord discord, bool getAllClips)
+        /// <summary>
+        /// Get the clips from twitch
+        /// </summary>
+        /// <param name="fiveMinutesAgo"></param>
+        /// <param name="database"></param>
+        /// <param name="configuration"></param>
+        /// <param name="discord"></param>
+        /// <param name="getAllClips"></param>
+        /// <param name="wholeDay"></param>
+        /// <returns></returns>
+        private async Task ConfigClipSearch(Database database, IConfigurationRoot configuration, Discord discord, bool getAllClips, bool wholeDay = false)
         {       
             DateTime currentTime = DateTime.Now;
-            if (fiveMinutesAgo == null)
-            {
-                fiveMinutesAgo = currentTime.AddMinutes(timeToSearch * -1);
-            }
-            DateTime past = (DateTime)fiveMinutesAgo;
+            DateTime past = currentTime.AddMinutes(-30);
             var counter = 0;
             TwitchClass streamTwitch = null;
             string finalDate = "";
             List<ClipInfo> clips = new List<ClipInfo>();
             string broadcasterId = configuration.GetSettings("Broadcaster_ID");
+            double amountsOfRunningThrough = 1;            
+            if (timeToSearch > 30)
+            {
+                amountsOfRunningThrough = Math.Ceiling(Convert.ToDouble(timeToSearch) / 30);
+            }
+            if (wholeDay)
+            {
+                amountsOfRunningThrough = 48;
+            }
             do
             {
                 if (counter > 0)
                 {
-                    currentTime = currentTime.AddMinutes(timeToSearch * -1);
-                    past = past.AddMinutes(timeToSearch * -1);
+                    currentTime = currentTime.AddMinutes(-30);
+                    past = past.AddMinutes(-30);
                 }
                 counter++;
                 string endDate = currentTime.ToString("yyyy") + "-" + currentTime.ToString("MM") + "-" + currentTime.ToString("dd") + "T" + currentTime.ToString("HH") + ":" + currentTime.ToString("mm") + ":" + currentTime.ToString("ss") + "Z";
@@ -106,7 +139,16 @@ namespace TwitchClipAutodownloader
                     }
                 } while (streamTwitch.pagination.cursor != null);
                 finalDate = endDate;
-            } while (getAllClips && (currentTime.Month != 5 || currentTime.Day != 25 || currentTime.Year != 2016));
+                amountsOfRunningThrough--;
+                if (amountsOfRunningThrough == 0 && getAllClips == false)
+                {
+                    break;
+                }
+                else if (getAllClips && (currentTime.Month != 1 || currentTime.Day != 30 || currentTime.Year != 2019))
+                {
+                    break;
+                }
+            } while (true);
             // Filter out duplicates
             clips = clips.Distinct().ToList();
             Console.WriteLine("done getting clips " + finalDate);
@@ -135,24 +177,27 @@ namespace TwitchClipAutodownloader
             await database.OpenDBConnection();
             foreach (ClipInfo clip in clips)
             {
-                string tempPath = path + "/video.mp4";
-                try
+                if (!await database.CheckIfClipAlreadyExists(clip.id))
                 {
-                    twitchDownload.Options.FilesystemOptions.Output = tempPath;
-                    twitchDownload.VideoUrl = clip.url;
-                    await twitchDownload.DownloadAsync();
-                    await discord.UploadClipToDiscord(tempPath, clip);
-                    
-                    await database.ClipToDatabase(clip);
-                }
-                catch { }
-                finally
-                {
-                    if (File.Exists(tempPath))
+                    string tempPath = path + $"/{clip.id}.mp4";
+                    try
                     {
-                        File.Delete(tempPath);
+                        twitchDownload.Options.FilesystemOptions.Output = tempPath;
+                        twitchDownload.VideoUrl = clip.url;
+                        await twitchDownload.DownloadAsync();
+                        await discord.UploadClipToDiscord(tempPath, clip);
+
+                        await database.ClipToDatabase(clip);
                     }
-                }
+                    catch { }
+                    finally
+                    {
+                        if (File.Exists(tempPath))
+                        {
+                            File.Delete(tempPath);
+                        }
+                    }
+                }                
             }
             await database.CloseDBConnection();
             Console.WriteLine("finished");

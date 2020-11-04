@@ -14,36 +14,62 @@ namespace TwitchClipAutodownloader
         DiscordSocketClient client = null;
         SocketGuild server = null;
         SocketTextChannel channel = null;
+        /// <summary>
+        /// Start the Discord bot, it needs to be online to send stuff
+        /// </summary>
+        /// <param name="token"></param>
+        /// <param name="serverId"></param>
+        /// <param name="channelId"></param>
+        /// <returns></returns>
         public async Task StartDiscordBot(string token, ulong serverId, ulong channelId)
         {
             client = new DiscordSocketClient();
             client.Log += Log;
             await client.LoginAsync(TokenType.Bot, token);
             await client.StartAsync();
+            // Wait until bot is online to get the needed Channel
             do
             {
                 await Task.Delay(500);
             } while (client.ConnectionState != ConnectionState.Connected);
+            // Get Server to send clips to
             server = client.GetGuild(serverId) as SocketGuild;
+            // Get Channel to send clips to
             channel = server.GetChannel(channelId) as SocketTextChannel;
         }
-
+        /// <summary>
+        /// Upload the Clip into the discord channel
+        /// </summary>
+        /// <param name="filepath"></param>
+        /// <param name="clip"></param>
+        /// <returns></returns>
         public async Task UploadClipToDiscord(string filepath, ClipInfo clip)
         {
             await channel.SendFileAsync(filepath, "", false, CreateEmbed(clip));
         }
-
+        /// <summary>
+        /// Shutdown the Bot
+        /// </summary>
+        /// <returns></returns>
         public async Task StopDiscordBot()
         {
             await client.StopAsync();
         }
-
+        /// <summary>
+        /// Log Method to Log the Bot events
+        /// </summary>
+        /// <param name="msg"></param>
+        /// <returns></returns>
         private Task Log(LogMessage msg)
         {
             Console.WriteLine(msg.ToString());
             return Task.CompletedTask;
         }
-
+        /// <summary>
+        /// Embed creator to build a better Message
+        /// </summary>
+        /// <param name="clip"></param>
+        /// <returns></returns>
         private Embed CreateEmbed(ClipInfo clip)
         {
             EmbedBuilder clipInfo = new EmbedBuilder()
