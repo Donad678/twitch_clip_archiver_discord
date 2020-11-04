@@ -51,12 +51,11 @@ namespace TwitchClipAutodownloader
                 {
                     await ConfigClipSearch(database, configuration, clientPassthrough, true);
                 }
-                bool did24h = false;
                 do
                 {
                     // Check if the time is around midnight to make a test check if every clip of the day is archived
                     if ((DateTime.Now.Hour == 23 && DateTime.Now.Minute > 30) || (DateTime.Now.Hour == 0 && DateTime.Now.Minute < 1))
-                    {                    
+                    {
                         await ConfigClipSearch(database, configuration, clientPassthrough, false, true);
                     }
                     else
@@ -66,7 +65,7 @@ namespace TwitchClipAutodownloader
                         {
                             await ConfigClipSearch(database, configuration, clientPassthrough, false);
                         });
-                        
+
                     }
                     await Task.Delay(30 * 60000);
 
@@ -90,7 +89,7 @@ namespace TwitchClipAutodownloader
         /// <param name="wholeDay"></param>
         /// <returns></returns>
         private async Task ConfigClipSearch(Database database, IConfigurationRoot configuration, Discord discord, bool getAllClips, bool wholeDay = false)
-        {       
+        {
             DateTime currentTime = DateTime.Now;
             DateTime past = currentTime.AddMinutes(-30);
             var counter = 0;
@@ -98,7 +97,7 @@ namespace TwitchClipAutodownloader
             string finalDate = "";
             List<ClipInfo> clips = new List<ClipInfo>();
             string broadcasterId = configuration.GetSettings("Broadcaster_ID");
-            double amountsOfRunningThrough = 1;            
+            double amountsOfRunningThrough = 1;
             if (timeToSearch > 30)
             {
                 amountsOfRunningThrough = Math.Ceiling(Convert.ToDouble(timeToSearch) / 30);
@@ -165,12 +164,12 @@ namespace TwitchClipAutodownloader
             if (clips.Count > 0)
             {
                 // Order from Oldest to Newest
-                clips =  clips.OrderBy(d => d.created_at).ToList();
+                clips = clips.OrderBy(d => d.created_at).ToList();
                 await DownloadClips(discord, database, clips);
             }
         }
 
-        public async Task DownloadClips(Discord discord, Database database , List<ClipInfo> clips)
+        public async Task DownloadClips(Discord discord, Database database, List<ClipInfo> clips)
         {
             YoutubeDL twitchDownload = new YoutubeDL();
             string path = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/clips";
@@ -197,7 +196,8 @@ namespace TwitchClipAutodownloader
                             File.Delete(tempPath);
                         }
                     }
-                }                
+                }
+
             }
             await database.CloseDBConnection();
             Console.WriteLine("finished");

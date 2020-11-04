@@ -3,6 +3,7 @@ using Discord.WebSocket;
 using NYoutubeDL;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
@@ -85,7 +86,7 @@ namespace TwitchClipAutodownloader
             EmbedFieldBuilder field2 = new EmbedFieldBuilder()
             {
                 Name = "Created at",
-                Value = clip.created_at,
+                Value = clip.created_at.ToString("dd.MM.yyyy"),
                 IsInline = true
             };
             clipInfo.AddField(field1);
