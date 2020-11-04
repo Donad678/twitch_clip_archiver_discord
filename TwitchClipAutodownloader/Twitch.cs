@@ -144,7 +144,7 @@ namespace TwitchClipAutodownloader
                 {
                     break;
                 }
-                else if (getAllClips && (currentTime.Month != 1 || currentTime.Day != 30 || currentTime.Year != 2019))
+                else if (getAllClips && (currentTime.Month == 1 && currentTime.Day == 30 && currentTime.Year == 2019))
                 {
                     break;
                 }

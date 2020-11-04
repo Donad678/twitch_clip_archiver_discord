@@ -5,12 +5,11 @@ using System.Text;
 
 namespace TwitchClipAutodownloader
 {
-
+    /// <summary>
+    /// The Clip object
+    /// </summary>
     public class ClipInfo
     {
-        /// <summary>
-        /// The Clip object
-        /// </summary>
         public string id { get; set; }
         public string url { get; set; }
         public string embed_url { get; set; }
