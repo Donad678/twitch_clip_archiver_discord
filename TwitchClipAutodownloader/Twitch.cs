@@ -2,7 +2,6 @@
 using Discord.WebSocket;
 using Microsoft.Extensions.Configuration;
 using MySqlConnector;
-using Newtonsoft.Json;
 using NYoutubeDL;
 using RateLimiter;
 using System;
@@ -11,6 +10,7 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace TwitchClipAutodownloader
@@ -94,8 +94,23 @@ namespace TwitchClipAutodownloader
             DateTime past = currentTime.AddMinutes(-30);
             var counter = 0;
             TwitchClass streamTwitch = null;
+            int endDay = 30;
+            int endMonth = 1;
+            int endYear = 2019;
             string finalDate = "";
             List<ClipInfo> clips = new List<ClipInfo>();
+            TwitchClass import = await ImportJson();
+            if (import != null)
+            {
+                clips = import.data;
+                clips = clips.OrderByDescending(d => d.created_at).ToList();
+                ClipInfo newest = clips[0];
+                DateTime newEnd = newest.created_at.AddDays(-3);
+                endMonth = newEnd.Month;
+                endDay = newEnd.Day;
+                endYear = newEnd.Year;
+                
+            }
             string broadcasterId = configuration.GetSettings("Broadcaster_ID");
             double amountsOfRunningThrough = 1;
             if (timeToSearch > 30)
@@ -131,7 +146,7 @@ namespace TwitchClipAutodownloader
                         url = url + date + "&ended_at=" + endDate + "&after=" + streamTwitch.pagination.cursor;
                     }
                     string responseBody = await twitch.GetAsync(url).Result.Content.ReadAsStringAsync();
-                    streamTwitch = JsonConvert.DeserializeObject<TwitchClass>(responseBody);
+                    streamTwitch = JsonSerializer.Deserialize<TwitchClass>(responseBody);
                     foreach (ClipInfo clip in streamTwitch.data)
                     {
                         clips.Add(clip);
@@ -143,7 +158,7 @@ namespace TwitchClipAutodownloader
                 {
                     break;
                 }
-                else if (getAllClips && (currentTime.Month == 1 && currentTime.Day == 30 && currentTime.Year == 2019))
+                else if (getAllClips && (currentTime.Month == endMonth && currentTime.Day == endDay && currentTime.Year == endYear))
                 {
                     break;
                 }
@@ -153,13 +168,17 @@ namespace TwitchClipAutodownloader
             Console.WriteLine("done getting clips " + finalDate);
             Console.WriteLine("Got " + clips.Count + " Clips");
             Console.WriteLine();
-            string json = JsonConvert.SerializeObject(clips);
             // Existed to write results to file
-            // using (StreamWriter file = File.CreateText(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + @"/clips/data.json"))
+            // using (StreamWriter file = File.CreateText(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + @"/clips/import.json"))
             // {
             //     JsonSerializer serializer = new JsonSerializer();
+            //     TwitchClass twitchClass = new TwitchClass()
+            //     {
+            //         data = clips,
+            //         pagination = null
+            //     };
             //     //serialize object directly into file stream
-            //     serializer.Serialize(file, clips);
+            //     serializer.Serialize(file, twitchClass);
             // }
             if (clips.Count > 0)
             {
@@ -167,6 +186,17 @@ namespace TwitchClipAutodownloader
                 clips = clips.OrderBy(d => d.created_at).ToList();
                 await DownloadClips(discord, database, clips);
             }
+        }
+
+        public async Task<TwitchClass> ImportJson()
+        {
+            string path = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + @"/import.json";
+            if (File.Exists(path))
+            {
+                TwitchClass obj = JsonSerializer.Deserialize<TwitchClass>(File.ReadAllText(path));
+                return obj;
+            }
+            return null;            
         }
 
         public async Task DownloadClips(Discord discord, Database database, List<ClipInfo> clips)
