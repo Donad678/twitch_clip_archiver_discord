@@ -121,7 +121,7 @@ namespace TwitchClipAutodownloader
             }
             if (wholeDay)
             {
-                amountsOfRunningThrough = 48;
+                amountsOfRunningThrough = 96;
             }
             do
             {
