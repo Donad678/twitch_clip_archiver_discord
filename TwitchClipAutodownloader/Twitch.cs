@@ -99,18 +99,20 @@ namespace TwitchClipAutodownloader
             int endYear = 2019;
             string finalDate = "";
             List<ClipInfo> clips = new List<ClipInfo>();
-            TwitchClass import = await ImportJson();
-            if (import != null)
+            if(getAllClips)
             {
-                clips = import.data;
-                clips = clips.OrderByDescending(d => d.created_at).ToList();
-                ClipInfo newest = clips[0];
-                DateTime newEnd = newest.created_at.AddDays(-3);
-                endMonth = newEnd.Month;
-                endDay = newEnd.Day;
-                endYear = newEnd.Year;
-                
-            }
+                TwitchClass import = await ImportJson();
+                if (import != null)
+                {
+                    clips = import.data;
+                    clips = clips.OrderByDescending(d => d.created_at).ToList();
+                    ClipInfo newest = clips[0];
+                    DateTime newEnd = newest.created_at.AddDays(-3);
+                    endMonth = newEnd.Month;
+                    endDay = newEnd.Day;
+                    endYear = newEnd.Year;                
+                }
+            }            
             string broadcasterId = configuration.GetSettings("Broadcaster_ID");
             double amountsOfRunningThrough = 1;
             if (timeToSearch > 30)
