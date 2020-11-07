@@ -12,7 +12,7 @@ namespace TwitchClipAutodownloader
         string connectionString = "";
 
         public Database(string passedConnectionString)
-        {            
+        {
             connectionString = passedConnectionString;
         }
         /// <summary>
@@ -21,8 +21,17 @@ namespace TwitchClipAutodownloader
         /// <returns></returns>
         public async Task OpenDBConnection()
         {
-            connection = new MySqlConnection(connectionString);
-            connection.Open();
+            try
+            {
+                connection = new MySqlConnection(connectionString);
+                connection.Open();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                Environment.Exit(0);
+            }
+
         }
         /// <summary>
         /// Close the connection to the database
@@ -40,30 +49,26 @@ namespace TwitchClipAutodownloader
         /// <returns></returns>
         public async Task ClipToDatabase(ClipInfo clip)
         {
-            using (MySqlCommand command = new MySqlCommand())
+            try
             {
-                command.Connection = connection;
-                command.CommandText = "INSERT INTO " +
-                    "clips " +
-                    "(id, url, embed_url, broadcaster_id, broadcaster_name, creator_id, creator_name, video_id, game_id, language, title, view_count, created_at, thumbnail_url)" +
-                    " VALUES " +
-                    "(@id, @url, @embed_url, @broadcaster_id, @broadcaster_name, @creator_id, @creator_name, @video_id, @game_id, @language, @title, @view_count, @created_at, @thumbnail_url)";
-                command.Parameters.AddWithValue("@id", clip.id);
-                command.Parameters.AddWithValue("@url", clip.url);
-                command.Parameters.AddWithValue("@embed_url", clip.embed_url);
-                command.Parameters.AddWithValue("@broadcaster_id", clip.broadcaster_id);
-                command.Parameters.AddWithValue("@broadcaster_name", clip.broadcaster_name);
-                command.Parameters.AddWithValue("@creator_id", clip.creator_id);
-                command.Parameters.AddWithValue("@creator_name", clip.creator_name);
-                command.Parameters.AddWithValue("@video_id", clip.video_id);
-                command.Parameters.AddWithValue("@game_id", clip.game_id);
-                command.Parameters.AddWithValue("@language", clip.language);
-                command.Parameters.AddWithValue("@title", clip.title);
-                command.Parameters.AddWithValue("@view_count", clip.view_count);
-                command.Parameters.AddWithValue("@created_at", clip.created_at);
-                command.Parameters.AddWithValue("@thumbnail_url", clip.thumbnail_url);
-                await command.ExecuteNonQueryAsync();
+                using (MySqlCommand command = new MySqlCommand())
+                {
+                    command.Connection = connection;
+                    command.CommandText = "INSERT INTO " +
+                        "clips " +
+                        "(id)" +
+                        " VALUES " +
+                        "(@id)";
+                    command.Parameters.AddWithValue("@id", clip.id);                    
+                    await command.ExecuteNonQueryAsync();
+                }
             }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                Environment.Exit(0);
+            }
+            
 
         }
         /// <summary>
@@ -71,17 +76,25 @@ namespace TwitchClipAutodownloader
         /// </summary>
         /// <returns></returns>
         public async Task<int> GetNumberOfArchivedClips()
-        {           
-            int result = 0;
-            using (var cmd = new MySqlCommand("SELECT COUNT(*) FROM clips", connection))
+        {
+            int result = 0;            
+            try
             {
-                using (var reader = await cmd.ExecuteReaderAsync())
+                using (var cmd = new MySqlCommand("SELECT COUNT(*) FROM clips", connection))
                 {
-                    while (await reader.ReadAsync())
+                    using (var reader = await cmd.ExecuteReaderAsync())
                     {
-                        result = reader.GetInt32(0);
+                        while (await reader.ReadAsync())
+                        {
+                            result = reader.GetInt32(0);
+                        }
                     }
                 }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                Environment.Exit(0);
             }
             return result;
         }
@@ -93,15 +106,23 @@ namespace TwitchClipAutodownloader
         public async Task<bool> CheckIfClipAlreadyExists(string id)
         {
             bool clipExists = false;
-            using (var cmd = new MySqlCommand($"SELECT * FROM clips WHERE `id`='{id}'", connection))
-            {
-                using (var reader = await cmd.ExecuteReaderAsync())
+            try
+            {                
+                using (var cmd = new MySqlCommand($"SELECT * FROM clips WHERE `id`='{id}'", connection))
                 {
-                    while (await reader.ReadAsync())
+                    using (var reader = await cmd.ExecuteReaderAsync())
                     {
-                        clipExists = true;
+                        while (await reader.ReadAsync())
+                        {
+                            clipExists = true;
+                        }
                     }
-                }
+                }                
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                Environment.Exit(0);
             }
             return clipExists;
         }

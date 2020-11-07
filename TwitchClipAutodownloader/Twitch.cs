@@ -46,10 +46,11 @@ namespace TwitchClipAutodownloader
                 int numberOfArchivedClips = await database.GetNumberOfArchivedClips();
                 await database.CloseDBConnection();
 
+                TwitchClass import = await ImportJson();
                 // If database is empty, then first run of the application, get all past clips
-                if (numberOfArchivedClips == 0)
+                if (numberOfArchivedClips == 0 || import != null)
                 {
-                    await ConfigClipSearch(database, configuration, clientPassthrough, true);
+                    await ConfigClipSearch(database, configuration, clientPassthrough, true, false ,import);
                 }
                 do
                 {
@@ -88,7 +89,7 @@ namespace TwitchClipAutodownloader
         /// <param name="getAllClips"></param>
         /// <param name="wholeDay"></param>
         /// <returns></returns>
-        private async Task ConfigClipSearch(Database database, IConfigurationRoot configuration, Discord discord, bool getAllClips, bool wholeDay = false)
+        private async Task ConfigClipSearch(Database database, IConfigurationRoot configuration, Discord discord, bool getAllClips, bool wholeDay = false, TwitchClass import = null)
         {
             DateTime currentTime = DateTime.Now;
             DateTime past = currentTime.AddMinutes(-30);
@@ -99,9 +100,8 @@ namespace TwitchClipAutodownloader
             int endYear = 2019;
             string finalDate = "";
             List<ClipInfo> clips = new List<ClipInfo>();
-            if(getAllClips)
-            {
-                TwitchClass import = await ImportJson();
+            if(getAllClips || import != null)
+            {                
                 if (import != null)
                 {
                     clips = import.data;
