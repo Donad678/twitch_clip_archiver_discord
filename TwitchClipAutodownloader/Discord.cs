@@ -77,10 +77,15 @@ namespace TwitchClipAutodownloader
             {
                 Description = clip.title
             };
+            string creatorName = "Name is missing";
+            if (clip.creator_name != "")
+            {
+                creatorName = clip.creator_name;
+            }
             EmbedFieldBuilder field1 = new EmbedFieldBuilder()
             {
                 Name = "Creator",
-                Value = clip.creator_name,
+                Value = creatorName,
                 IsInline = true
             };
             EmbedFieldBuilder field2 = new EmbedFieldBuilder()
