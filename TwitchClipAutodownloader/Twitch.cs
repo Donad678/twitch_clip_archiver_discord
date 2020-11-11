@@ -43,14 +43,25 @@ namespace TwitchClipAutodownloader
             Database database = new Database(configuration.GetConnectionString("Clips"));
             try
             {
+
+                TwitchClass import = await ImportJson();
+                if (import != null)
+                {
+                    clips = import.data;
+                    clips = clips.Distinct().ToList();
+                    Console.WriteLine("Imported " + clips.Count + " clips");
+                    clips = clips.OrderBy(d => d.created_at).ToList();
+                    await DownloadClips(clientPassthrough, database, clips);
+                    clips = new List<ClipInfo>();
+                }
+
                 // Get the number of archived clips
                 await database.OpenDBConnection();
                 int numberOfArchivedClips = await database.GetNumberOfArchivedClips();
                 await database.CloseDBConnection();
-
-                TwitchClass import = await ImportJson();
+                
                 // If database is empty, then first run of the application, get all past clips
-                if (numberOfArchivedClips == 0 || import != null)
+                if (numberOfArchivedClips == 0)
                 {
                     await ConfigClipSearch(database, configuration, clientPassthrough, true, DateTime.Now, false, import);
                     if (clips.Count > 0)
@@ -68,6 +79,7 @@ namespace TwitchClipAutodownloader
                     // Push it in the background
                     Task.Run(async () =>
                     {
+                        await Task.Delay(50);
                         try
                         {
                             clips = new List<ClipInfo>();
@@ -109,7 +121,7 @@ namespace TwitchClipAutodownloader
                             Console.WriteLine(ex.Message);
                         }
                     });
-                    await Task.Delay(30 * 60000);
+                    await Task.Delay(120 * 60000);
 
                 } while (true);
             }
