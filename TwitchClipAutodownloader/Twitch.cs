@@ -121,7 +121,7 @@ namespace TwitchClipAutodownloader
                             Console.WriteLine(ex.Message);
                         }
                     });
-                    await Task.Delay(120 * 60000);
+                    await Task.Delay(30 * 60000);
 
                 } while (true);
             }
