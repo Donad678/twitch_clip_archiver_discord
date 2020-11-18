@@ -20,7 +20,15 @@ namespace TwitchClipAutodownloader
         private static object _lockObj = new object();
         private static List<ClipInfo> clips = new List<ClipInfo>();
         public static int timeToSearch = 0;
-        HttpClient twitch = null;
+        public static HttpClient twitch = null;
+        private static Database database = null;        
+        public static Database Database
+        {
+            get
+            {
+                return database;
+            }
+        }
         public Twitch()
         {
             // Build handler with RateLimit
@@ -40,7 +48,7 @@ namespace TwitchClipAutodownloader
             timeToSearch = Convert.ToInt32(configuration.GetSettings("searchTime"));
             DateTime? fiveMinutesAgo = null;
             // Initialise Database Class
-            Database database = new Database(configuration.GetConnectionString("Clips"));
+            database = new Database(configuration.GetConnectionString("Clips"));
             try
             {
 
@@ -77,9 +85,8 @@ namespace TwitchClipAutodownloader
                 do
                 {
                     // Push it in the background
-                    Task.Run(async () =>
+                    await Task.Run(async() =>
                     {
-                        await Task.Delay(50);
                         try
                         {
                             clips = new List<ClipInfo>();
@@ -98,7 +105,7 @@ namespace TwitchClipAutodownloader
                             if (clips.Count > 0)
                             {                                
                                 clips = clips.Distinct().ToList();
-                                Console.WriteLine("Got " + clips.Count + " clips");
+                                Console.WriteLine(DateTime.Now.ToString("HH:mm:ss") + " Got " + clips.Count + " clips");
                                 // Existed to write results to file
                                 // using (StreamWriter file = File.CreateText(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + @"/clips/import.json"))
                                 // {
@@ -121,7 +128,13 @@ namespace TwitchClipAutodownloader
                             Console.WriteLine(ex.Message);
                         }
                     });
-                    await Task.Delay(30 * 60000);
+                    await Task.Delay(30000);
+                    // await Task.Delay(60000);
+                    // do
+                    // {
+                    //     await Task.Delay(250);
+                    // } while (DateTime.Now.Minute != 0 && DateTime.Now.Minute != 30);
+                    // await Task.Delay(30 * 60000);
 
                 } while (true);
             }
@@ -144,104 +157,106 @@ namespace TwitchClipAutodownloader
         /// <returns></returns>
         private async Task ConfigClipSearch(Database database, IConfigurationRoot configuration, Discord discord, bool getAllClips, DateTime currentTime, bool wholeDay = false, TwitchClass import = null)
         {
-            await Task.Delay(50);
-            // DateTime currentTime = DateTime.Now;
-            // if (bypass != null)
-            // {
-            //     currentTime = bypass.Value.AddMinutes(-10);
-            // }
-            DateTime past = currentTime.AddMinutes(-30);
-            var counter = 0;
-            TwitchClass streamTwitch = null;
-            int endDay = 30;
-            int endMonth = 1;
-            int endYear = 2019;
-            string finalDate = "";
-            // List<ClipInfo> clips = new List<ClipInfo>();
-            if (getAllClips || import != null)
+            await Task.Run(async () =>
             {
-                if (import != null)
+                // DateTime currentTime = DateTime.Now;
+                // if (bypass != null)
+                // {
+                //     currentTime = bypass.Value.AddMinutes(-10);
+                // }
+                DateTime past = currentTime.AddMinutes(-30);
+                var counter = 0;
+                TwitchClass streamTwitch = null;
+                int endDay = 30;
+                int endMonth = 1;
+                int endYear = 2019;
+                string finalDate = "";
+                // List<ClipInfo> clips = new List<ClipInfo>();
+                if (getAllClips || import != null)
                 {
-                    clips = import.data;
-                    clips = clips.OrderByDescending(d => d.created_at).ToList();
-                    ClipInfo newest = clips[0];
-                    DateTime newEnd = newest.created_at.AddDays(-3);
-                    endMonth = newEnd.Month;
-                    endDay = newEnd.Day;
-                    endYear = newEnd.Year;
+                    if (import != null)
+                    {
+                        clips = import.data;
+                        clips = clips.OrderByDescending(d => d.created_at).ToList();
+                        ClipInfo newest = clips[0];
+                        DateTime newEnd = newest.created_at.AddDays(-3);
+                        endMonth = newEnd.Month;
+                        endDay = newEnd.Day;
+                        endYear = newEnd.Year;
+                    }
                 }
-            }
-            string broadcasterId = configuration.GetSettings("Broadcaster_ID");
-            double amountsOfRunningThrough = 1;
-            if (timeToSearch > 30)
-            {
-                amountsOfRunningThrough = Math.Ceiling(Convert.ToDouble(timeToSearch) / 30);
-            }
-            if (wholeDay)
-            {
-                amountsOfRunningThrough = 96;
-            }
-            do
-            {
-                if (counter > 0)
+                string broadcasterId = configuration.GetSettings("Broadcaster_ID");
+                double amountsOfRunningThrough = 1;
+                if (timeToSearch > 30)
                 {
-                    currentTime = currentTime.AddMinutes(-30);
-                    past = past.AddMinutes(-30);
+                    amountsOfRunningThrough = Math.Ceiling(Convert.ToDouble(timeToSearch) / 30);
                 }
-                counter++;
-                string endDate = currentTime.ToString("yyyy") + "-" + currentTime.ToString("MM") + "-" + currentTime.ToString("dd") + "T" + currentTime.ToString("HH") + ":" + currentTime.ToString("mm") + ":" + currentTime.ToString("ss") + "Z";
-                string date = past.ToString("yyyy") + "-" + past.ToString("MM") + "-" + past.ToString("dd") + "T" + past.ToString("HH") + ":" + past.ToString("mm") + ":" + past.ToString("ss") + "Z";
-                int PaginationCounter = 0;
+                if (wholeDay)
+                {
+                    amountsOfRunningThrough = 96;
+                }
                 do
                 {
+                    if (counter > 0)
+                    {
+                        currentTime = currentTime.AddMinutes(-30);
+                        past = past.AddMinutes(-30);
+                    }
+                    counter++;
+                    string endDate = currentTime.ToString("yyyy") + "-" + currentTime.ToString("MM") + "-" + currentTime.ToString("dd") + "T" + currentTime.ToString("HH") + ":" + currentTime.ToString("mm") + ":" + currentTime.ToString("ss") + "Z";
+                    string date = past.ToString("yyyy") + "-" + past.ToString("MM") + "-" + past.ToString("dd") + "T" + past.ToString("HH") + ":" + past.ToString("mm") + ":" + past.ToString("ss") + "Z";
+                    int PaginationCounter = 0;
+                    do
+                    {
 
-                    string url = "https://api.twitch.tv/helix/clips?broadcaster_id=" + broadcasterId + "&started_at=";
-                    if (PaginationCounter == 0)
-                    {
-                        PaginationCounter++;
-                        url = url + date + "&ended_at=" + endDate;
-                    }
-                    else
-                    {
-                        url = url + date + "&ended_at=" + endDate + "&after=" + streamTwitch.pagination.cursor;
-                    }
-                    string responseBody = await twitch.GetAsync(url).Result.Content.ReadAsStringAsync();
-                    streamTwitch = JsonSerializer.Deserialize<TwitchClass>(responseBody);
-                    foreach (ClipInfo clip in streamTwitch.data)
-                    {
-                        lock (_lockObj)
+                        string url = "https://api.twitch.tv/helix/clips?broadcaster_id=" + broadcasterId + "&started_at=";
+                        if (PaginationCounter == 0)
                         {
-                            clips.Add(clip);
+                            PaginationCounter++;
+                            url = url + date + "&ended_at=" + endDate;
                         }
+                        else
+                        {
+                            url = url + date + "&ended_at=" + endDate + "&after=" + streamTwitch.pagination.cursor;
+                        }
+                        string responseBody = await twitch.GetAsync(url).Result.Content.ReadAsStringAsync();
+                        streamTwitch = JsonSerializer.Deserialize<TwitchClass>(responseBody);
+                        foreach (ClipInfo clip in streamTwitch.data)
+                        {
+                            lock (_lockObj)
+                            {
+                                clips.Add(clip);
+                            }
+                        }
+                        // Console.Clear();
+                        // Console.WriteLine("Got " + clips.Count + " Clips");
+                    } while (streamTwitch.pagination.cursor != null);
+                    finalDate = endDate;
+                    amountsOfRunningThrough--;
+                    if (amountsOfRunningThrough == 0 && getAllClips == false)
+                    {
+                        break;
                     }
-                    // Console.Clear();
-                    // Console.WriteLine("Got " + clips.Count + " Clips");
-                } while (streamTwitch.pagination.cursor != null);
-                finalDate = endDate;
-                amountsOfRunningThrough--;
-                if (amountsOfRunningThrough == 0 && getAllClips == false)
-                {
-                    break;
-                }
-                else if (getAllClips && (currentTime.Month == endMonth && currentTime.Day == endDay && currentTime.Year == endYear))
-                {
-                    break;
-                }
-            } while (true);
-            // Filter out duplicates
-            // lock (_lockObj)
-            // {
-            //     clips = clips.Distinct().ToList();
-            // }
-            // Console.WriteLine("done getting clips " + finalDate);
-            // Console.WriteLine("Got " + clips.Count + " Clips");
-            // Console.WriteLine();            
-            // if (clips.Count > 0)
-            // {
-            //     // Order from Oldest to Newest
-            //     // clips = clips.OrderBy(d => d.created_at).ToList();
-            //     // await DownloadClips(discord, database, clips);
-            // }
+                    else if (getAllClips && (currentTime.Month == endMonth && currentTime.Day == endDay && currentTime.Year == endYear))
+                    {
+                        break;
+                    }
+                } while (true);
+                // Filter out duplicates
+                // lock (_lockObj)
+                // {
+                //     clips = clips.Distinct().ToList();
+                // }
+                // Console.WriteLine("done getting clips " + finalDate);
+                // Console.WriteLine("Got " + clips.Count + " Clips");
+                // Console.WriteLine();            
+                // if (clips.Count > 0)
+                // {
+                //     // Order from Oldest to Newest
+                //     // clips = clips.OrderBy(d => d.created_at).ToList();
+                //     // await DownloadClips(discord, database, clips);
+                // }
+            });            
         }
 
         public async Task<TwitchClass> ImportJson()
@@ -289,7 +304,7 @@ namespace TwitchClipAutodownloader
 
             }
             await database.CloseDBConnection();
-            Console.WriteLine("finished");
+            Console.WriteLine(DateTime.Now.ToString("HH:mm:ss") + " finished");
         }
     }
 }

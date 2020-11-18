@@ -1,12 +1,15 @@
 ﻿using Discord;
+using Discord.Commands;
 using Discord.WebSocket;
 using NYoutubeDL;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace TwitchClipAutodownloader
 {
@@ -15,6 +18,8 @@ namespace TwitchClipAutodownloader
         DiscordSocketClient client = null;
         SocketGuild server = null;
         SocketTextChannel channel = null;
+        private IServiceProvider services;
+        private CommandService commands;
         /// <summary>
         /// Start the Discord bot, it needs to be online to send stuff
         /// </summary>
@@ -26,6 +31,15 @@ namespace TwitchClipAutodownloader
         {
             client = new DiscordSocketClient();
             client.Log += Log;
+            commands = new CommandService(new CommandServiceConfig
+            {
+                DefaultRunMode = RunMode.Async
+            });
+            services = new ServiceCollection()
+                .AddSingleton(client)
+                .AddSingleton(commands)
+                .BuildServiceProvider();
+            await InstallCommandsAsync();
             await client.LoginAsync(TokenType.Bot, token);
             await client.StartAsync();
             // Wait until bot is online to get the needed Channel
@@ -33,11 +47,47 @@ namespace TwitchClipAutodownloader
             {
                 await Task.Delay(500);
             } while (client.ConnectionState != ConnectionState.Connected);
-            // Get Server to send clips to
-            server = client.GetGuild(serverId) as SocketGuild;
-            // Get Channel to send clips to
-            channel = server.GetChannel(channelId) as SocketTextChannel;
+           // Get Server to send clips to
+           server = client.GetGuild(serverId) as SocketGuild;
+           // Get Channel to send clips to
+           channel = server.GetChannel(channelId) as SocketTextChannel;
         }
+
+        public async Task InstallCommandsAsync()
+        {
+            client.MessageReceived += Client_MessageReceived;
+
+            await commands.AddModulesAsync(Assembly.GetEntryAssembly(), null);
+        }
+
+        private async Task Client_MessageReceived(SocketMessage arg)
+        {
+            SocketUserMessage message = arg as SocketUserMessage;
+            if (message != null)
+            {
+                int argPos = 0;
+                if (message.Channel.GetType().Name == "SocketDMChannel")
+                {
+                    if (message.Author != client.CurrentUser)
+                    {
+                        var context = new SocketCommandContext(client, message);
+                        var result = await commands.ExecuteAsync(context, argPos, services);
+                        if (!result.IsSuccess)
+                        {
+                            var errorstream = new EmbedBuilder()
+                            {
+                                Title = "ERROR",
+                                Description = result.ErrorReason,
+                                ThumbnailUrl = "https://i.imgur.com/2Bu19vk.png"
+                            };
+                            Embed test = errorstream.Build();
+                            await context.Channel.SendMessageAsync("", false, test);
+                        }
+                    }
+                }
+            }
+        }
+
         /// <summary>
         /// Upload the Clip into the discord channel
         /// </summary>
