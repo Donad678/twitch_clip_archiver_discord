@@ -78,7 +78,7 @@ namespace TwitchClipAutodownloader.DiscordCommands
                 {
                     x.Name = string.Join(", ", cmd.Aliases);
                     //x.Value = $"Parameters: {string.Join(", ", cmd.Parameters.Select(p => p.Name))}\n" +
-                    x.Value = $"Beschreibung: {cmd.Summary}";
+                    x.Value = $"Description: {cmd.Summary}";
                     x.IsInline = false;
                 });
             }

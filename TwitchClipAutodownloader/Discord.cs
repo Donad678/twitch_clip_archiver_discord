@@ -16,10 +16,11 @@ namespace TwitchClipAutodownloader
     class Discord
     {
         DiscordSocketClient client = null;
-        SocketGuild server = null;
-        SocketTextChannel channel = null;
         private IServiceProvider services;
         private CommandService commands;
+        ulong ServerId = 0;
+        ulong ChannelId = 0;
+
         /// <summary>
         /// Start the Discord bot, it needs to be online to send stuff
         /// </summary>
@@ -29,8 +30,14 @@ namespace TwitchClipAutodownloader
         /// <returns></returns>
         public async Task StartDiscordBot(string token, ulong serverId, ulong channelId)
         {
-            client = new DiscordSocketClient();
-            client.Log += Log;
+            ServerId = serverId;
+            ChannelId = channelId;
+            DiscordSocketConfig configuration = new DiscordSocketConfig()
+            {
+                AlwaysDownloadUsers = true
+            };
+            client = new DiscordSocketClient(configuration);
+            client.Log += Log;            
             commands = new CommandService(new CommandServiceConfig
             {
                 DefaultRunMode = RunMode.Async
@@ -47,10 +54,7 @@ namespace TwitchClipAutodownloader
             {
                 await Task.Delay(500);
             } while (client.ConnectionState != ConnectionState.Connected);
-           // Get Server to send clips to
-           server = client.GetGuild(serverId) as SocketGuild;
-           // Get Channel to send clips to
-           channel = server.GetChannel(channelId) as SocketTextChannel;
+           
         }
 
         public async Task InstallCommandsAsync()
@@ -96,6 +100,10 @@ namespace TwitchClipAutodownloader
         /// <returns></returns>
         public async Task UploadClipToDiscord(string filepath, ClipInfo clip)
         {
+            // Get Server to send clips to
+            SocketGuild server = client.GetGuild(ServerId) as SocketGuild;
+            // Get Channel to send clips to
+            SocketTextChannel channel = server.GetChannel(ChannelId) as SocketTextChannel;
             await channel.SendFileAsync(filepath, "", false, CreateEmbed(clip));
         }
         /// <summary>

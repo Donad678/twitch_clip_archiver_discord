@@ -20,15 +20,7 @@ namespace TwitchClipAutodownloader
         private static object _lockObj = new object();
         private static List<ClipInfo> clips = new List<ClipInfo>();
         public static int timeToSearch = 0;
-        public static HttpClient twitch = null;
-        private static Database database = null;        
-        public static Database Database
-        {
-            get
-            {
-                return database;
-            }
-        }
+        public static HttpClient twitch = null;   
         public Twitch()
         {
             // Build handler with RateLimit
@@ -48,7 +40,7 @@ namespace TwitchClipAutodownloader
             timeToSearch = Convert.ToInt32(configuration.GetSettings("searchTime"));
             DateTime? fiveMinutesAgo = null;
             // Initialise Database Class
-            database = new Database(configuration.GetConnectionString("Clips"));
+            Database database = new Database(configuration.GetConnectionString("Clips"));
             try
             {
 
@@ -97,9 +89,9 @@ namespace TwitchClipAutodownloader
                             {
                                 DoubleCheck = true;
                             }
-                            Task work1 = ConfigClipSearch(database, configuration, clientPassthrough, false, currentTime.AddMinutes(-10), DoubleCheck);
-                            Task work2 = ConfigClipSearch(database, configuration, clientPassthrough, false, currentTime.AddMinutes(-20), DoubleCheck);
-                            Task work3 = ConfigClipSearch(database, configuration, clientPassthrough, false, currentTime.AddMinutes(-30), DoubleCheck);
+                            Task work1 = ConfigClipSearch(database, configuration, clientPassthrough, false, currentTime.AddMinutes(-30), DoubleCheck);
+                            Task work2 = ConfigClipSearch(database, configuration, clientPassthrough, false, currentTime.AddMinutes(-40), DoubleCheck);
+                            Task work3 = ConfigClipSearch(database, configuration, clientPassthrough, false, currentTime.AddMinutes(-50), DoubleCheck);
                             // await ConfigClipSearch(database, configuration, clientPassthrough, false, currentTime);
                             await Task.WhenAll(work1, work2, work3);
                             if (clips.Count > 0)
@@ -126,6 +118,7 @@ namespace TwitchClipAutodownloader
                         catch (Exception ex)
                         {
                             Console.WriteLine(ex.Message);
+                            Console.WriteLine(ex.StackTrace);
                         }
                     });
                     await Task.Delay(30000);
@@ -291,6 +284,7 @@ namespace TwitchClipAutodownloader
                     }
                     catch (Exception ex)
                     {
+                        Console.WriteLine(ex.StackTrace);
                         Console.WriteLine(ex.Message);
                     }
                     finally
