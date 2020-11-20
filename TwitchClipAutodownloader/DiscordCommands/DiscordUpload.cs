@@ -68,7 +68,7 @@ namespace TwitchClipAutodownloader.DiscordCommands
                     ClipInfo clip = streamTwitch.data[0];
                     if (clip.broadcaster_id == Program.configuration.GetSettings("Broadcaster_ID"))
                     {
-                        DateTime currentTime = DateTime.Now;
+                        DateTime currentTime = DateTime.UtcNow;
                         DateTime oneDayAgo = currentTime.AddDays(-1);
                         if (clip.created_at < oneDayAgo)
                         {
@@ -114,7 +114,7 @@ namespace TwitchClipAutodownloader.DiscordCommands
                         else
                         {
                             DateTime creation = clip.created_at.AddDays(1);
-                            await Context.Channel.SendMessageAsync("Clip has to be older than 24 hours, you can request the clip at " + creation.ToString("dd.MM.yyyy hh:mm:ss tt") + " CET");
+                            await Context.Channel.SendMessageAsync("Clip has to be older than 24 hours, you can request the clip at " + creation.ToString("dd.MM.yyyy hh:mm:ss tt") + " UTC");
                         }
                     }
                     else
