@@ -39,7 +39,7 @@ namespace TwitchClipAutodownloader.DiscordCommands
         [Alias("up")]
         [Summary("Uploads missing clip to the bot")]
         public async Task UploadClip(string url)
-        {
+        {            
             //ulong.Parse(configuration.GetSettings("Discord_Server")), ulong.Parse(configuration.GetSettings("Discord_Channel")
             SocketGuild server = Context.Client.GetGuild(ulong.Parse(Program.configuration.GetSettings("Discord_Server")));
             // Get Channel to send clips to
@@ -79,18 +79,21 @@ namespace TwitchClipAutodownloader.DiscordCommands
                             {
                                 string tempPath = path + $"/{clip.id}.mp4";
                                 try
-                                {
+                                {                                    
                                     twitchDownload.Options.FilesystemOptions.Output = tempPath;
                                     twitchDownload.VideoUrl = clip.url;
+                                    IDisposable typing = channel.EnterTypingState();
                                     await twitchDownload.DownloadAsync();
                                     await channel.SendFileAsync(tempPath, "", false, CreateEmbed(clip));
+                                    typing.Dispose();
 
                                     await database.ClipToDatabase(clip);
                                     await Context.Channel.SendMessageAsync("Clip uploaded successfully");
+                                    Program.Logging.Log("User " + Context.User.Username + "(id: " + Context.User.Id + ")" + " uploaded a Clip");
                                 }
                                 catch (Exception ex)
                                 {
-                                    Console.WriteLine(ex.Message);
+                                    Program.Logging.Log(ex.Message);
                                     EmbedBuilder error = new EmbedBuilder()
                                     {
                                         Description = ex.StackTrace

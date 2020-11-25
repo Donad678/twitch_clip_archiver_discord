@@ -28,7 +28,7 @@ namespace TwitchClipAutodownloader
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
+                Program.Logging.Log(ex.Message);
                 Environment.Exit(0);
             }
 
@@ -65,7 +65,7 @@ namespace TwitchClipAutodownloader
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
+                Program.Logging.Log(ex.Message);
                 Environment.Exit(0);
             }
             
@@ -93,7 +93,7 @@ namespace TwitchClipAutodownloader
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
+                Program.Logging.Log(ex.Message);
                 Environment.Exit(0);
             }
             return result;
@@ -121,7 +121,7 @@ namespace TwitchClipAutodownloader
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
+                Program.Logging.Log(ex.Message);
                 Environment.Exit(0);
             }
             return clipExists;

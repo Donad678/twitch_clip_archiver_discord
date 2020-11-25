@@ -20,25 +20,26 @@ namespace TwitchClipAutodownloader
         private static object _lockObj = new object();
         private static List<ClipInfo> clips = new List<ClipInfo>();
         public static int timeToSearch = 0;
-        public static HttpClient twitch = null;   
-        public Twitch()
+        public static HttpClient twitch = null;
+        private IConfigurationRoot configuration = null;
+        public Twitch(IConfigurationRoot config)
         {
             // Build handler with RateLimit
             DelegatingHandler handler = TimeLimiter.GetFromMaxCountByInterval(750, TimeSpan.FromMinutes(1)).AsDelegatingHandler();
             twitch = new HttpClient(handler);
+            // Set headers for the twitch api request
+            twitch.DefaultRequestHeaders.Add("Client-ID", config.GetApiKey("Twitch"));
+            twitch.DefaultRequestHeaders.Add("Authorization", config.GetApiKey("Twitch_OAuth"));
+            configuration = config;
         }
         /// <summary>
         /// Set up intervalls to search for clips
         /// </summary>
         /// <param name="clientPassthrough"></param>
         /// <param name="configuration"></param>
-        public async void ClipSearch(Discord clientPassthrough, IConfigurationRoot configuration)
-        {
-            // Set headers for the twitch api request
-            twitch.DefaultRequestHeaders.Add("Client-ID", configuration.GetApiKey("Twitch"));
-            twitch.DefaultRequestHeaders.Add("Authorization", configuration.GetApiKey("Twitch_OAuth"));
+        public async void ClipSearch(Discord clientPassthrough)
+        {            
             timeToSearch = Convert.ToInt32(configuration.GetSettings("searchTime"));
-            DateTime? fiveMinutesAgo = null;
             // Initialise Database Class
             Database database = new Database(configuration.GetConnectionString("Clips"));
             try
@@ -63,7 +64,7 @@ namespace TwitchClipAutodownloader
                 // If database is empty, then first run of the application, get all past clips
                 if (numberOfArchivedClips == 0)
                 {
-                    await ConfigClipSearch(database, configuration, clientPassthrough, true, DateTime.UtcNow, false, import);
+                    await ConfigClipSearch(database, clientPassthrough, true, DateTime.UtcNow, false, import);
                     if (clips.Count > 0)
                     {
                         clips = clips.Distinct().ToList();
@@ -74,69 +75,69 @@ namespace TwitchClipAutodownloader
                     }
                     clips = new List<ClipInfo>();
                 }
-                do
+                try
                 {
-                    try
+                    // Push it in the background
+                    await Task.Run(async () =>
                     {
-                        // Push it in the background
-                        await Task.Run(async () =>
+                        try
                         {
-                            try
+                            clips = new List<ClipInfo>();
+                            DateTime currentTime = DateTime.UtcNow;
+                            bool DoubleCheck = false;
+                            // Check if the time is around midnight to make a test check if every clip of the day is archived
+                            if ((currentTime.Hour == 23 && currentTime.Minute > 30) || (currentTime.Hour == 0 && currentTime.Minute < 1))
                             {
-                                clips = new List<ClipInfo>();
-                                DateTime currentTime = DateTime.UtcNow;
-                                bool DoubleCheck = false;
-                                // Check if the time is around midnight to make a test check if every clip of the day is archived
-                                if ((currentTime.Hour == 23 && currentTime.Minute > 30) || (currentTime.Hour == 0 && currentTime.Minute < 1))
-                                {
-                                    DoubleCheck = true;
-                                }
-                                Task work1 = ConfigClipSearch(database, configuration, clientPassthrough, false, currentTime.AddMinutes(-30), DoubleCheck);
-                                Task work2 = ConfigClipSearch(database, configuration, clientPassthrough, false, currentTime.AddMinutes(-40), DoubleCheck);
-                                Task work3 = ConfigClipSearch(database, configuration, clientPassthrough, false, currentTime.AddMinutes(-50), DoubleCheck);
-                                // await ConfigClipSearch(database, configuration, clientPassthrough, false, currentTime);
-                                await Task.WhenAll(work1, work2, work3);
-                                if (clips.Count > 0)
-                                {
-                                    clips = clips.Distinct().ToList();
-                                    Console.WriteLine(DateTime.UtcNow.ToString("HH:mm:ss") + " Got " + clips.Count + " clips");
-                                    // Existed to write results to file
-                                    // using (StreamWriter file = File.CreateText(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + @"/clips/import.json"))
-                                    // {
-                                    //     Newtonsoft.Json.JsonSerializer serializer = new Newtonsoft.Json.JsonSerializer();
-                                    //     TwitchClass twitchClass = new TwitchClass()
-                                    //     {
-                                    //         data = clips,
-                                    //         pagination = null
-                                    //     };
-                                    //     //serialize object directly into file stream
-                                    //     serializer.Serialize(file, twitchClass);
-                                    // }
-                                    // Order from Oldest to Newest
-                                    clips = clips.OrderBy(d => d.created_at).ToList();
-                                    await DownloadClips(clientPassthrough, database, clips);
-                                }
+                                DoubleCheck = true;
                             }
-                            catch (Exception ex)
+                            Task work1 = ConfigClipSearch(database, clientPassthrough, false, currentTime.AddMinutes(-30), DoubleCheck);
+                            Task work2 = ConfigClipSearch(database, clientPassthrough, false, currentTime.AddMinutes(-40), DoubleCheck);
+                            Task work3 = ConfigClipSearch(database, clientPassthrough, false, currentTime.AddMinutes(-50), DoubleCheck);
+                            // await ConfigClipSearch(database, configuration, clientPassthrough, false, currentTime);
+                            await Task.WhenAll(work1, work2, work3);
+                            if (clips.Count > 0)
                             {
-                                Console.WriteLine(ex.Message);
-                                Console.WriteLine(ex.StackTrace);
+                                clips = clips.Distinct().ToList();
+                                Program.Logging.Log("Got " + clips.Count + " clips");
+                                // Console.WriteLine(DateTime.UtcNow.ToString("HH:mm:ss") + " Got " + clips.Count + " clips");
+                                // Existed to write results to file
+                                // using (StreamWriter file = File.CreateText(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + @"/clips/import.json"))
+                                // {
+                                //     Newtonsoft.Json.JsonSerializer serializer = new Newtonsoft.Json.JsonSerializer();
+                                //     TwitchClass twitchClass = new TwitchClass()
+                                //     {
+                                //         data = clips,
+                                //         pagination = null
+                                //     };
+                                //     //serialize object directly into file stream
+                                //     serializer.Serialize(file, twitchClass);
+                                // }
+                                // Order from Oldest to Newest
+                                clips = clips.OrderBy(d => d.created_at).ToList();
+                                await DownloadClips(clientPassthrough, database, clips);
                             }
-                        });
-                        await Task.Delay(30000);
-                        // await Task.Delay(60000);
-                        // do
-                        // {
-                        //     await Task.Delay(250);
-                        // } while (DateTime.UtcNow.Minute != 0 && DateTime.UtcNow.Minute != 30);
-                        // await Task.Delay(30 * 60000);
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine(ex.Message);                        
-                    }                    
-
-                } while (true);
+                            else
+                            {
+                                Program.Logging.Log("There were no Clips found");
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Program.Logging.Log(ex.Message);
+                            Program.Logging.Log(ex.StackTrace);
+                        }
+                    });
+                    // await Task.Delay(60000);
+                    // do
+                    // {
+                    //     await Task.Delay(250);
+                    // } while (DateTime.UtcNow.Minute != 0 && DateTime.UtcNow.Minute != 30);
+                    // await Task.Delay(30 * 60000);
+                }
+                catch (Exception ex)
+                {
+                    Program.Logging.Log(ex.Message);
+                }
             }
             finally
             {
@@ -155,7 +156,7 @@ namespace TwitchClipAutodownloader
         /// <param name="getAllClips"></param>
         /// <param name="wholeDay"></param>
         /// <returns></returns>
-        private async Task ConfigClipSearch(Database database, IConfigurationRoot configuration, Discord discord, bool getAllClips, DateTime currentTime, bool wholeDay = false, TwitchClass import = null)
+        private async Task ConfigClipSearch(Database database, Discord discord, bool getAllClips, DateTime currentTime, bool wholeDay = false, TwitchClass import = null)
         {
             await Task.Run(async () =>
             {
@@ -291,8 +292,8 @@ namespace TwitchClipAutodownloader
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine(ex.StackTrace);
-                        Console.WriteLine(ex.Message);
+                        Program.Logging.Log(ex.Message);
+                        Program.Logging.Log(ex.StackTrace);
                     }
                     finally
                     {
