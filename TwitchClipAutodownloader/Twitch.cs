@@ -90,9 +90,9 @@ namespace TwitchClipAutodownloader
                             {
                                 DoubleCheck = true;
                             }
-                            Task work1 = ConfigClipSearch(database, clientPassthrough, false, currentTime.AddMinutes(-30), DoubleCheck);
-                            Task work2 = ConfigClipSearch(database, clientPassthrough, false, currentTime.AddMinutes(-40), DoubleCheck);
-                            Task work3 = ConfigClipSearch(database, clientPassthrough, false, currentTime.AddMinutes(-50), DoubleCheck);
+                            Task work1 = ConfigClipSearch(database, clientPassthrough, false, currentTime.AddMinutes(-20), DoubleCheck);
+                            Task work2 = ConfigClipSearch(database, clientPassthrough, false, currentTime.AddMinutes(-30), DoubleCheck);
+                            Task work3 = ConfigClipSearch(database, clientPassthrough, false, currentTime.AddMinutes(-40), DoubleCheck);
                             // await ConfigClipSearch(database, configuration, clientPassthrough, false, currentTime);
                             await Task.WhenAll(work1, work2, work3);
                             if (clips.Count > 0)
