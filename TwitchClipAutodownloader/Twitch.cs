@@ -123,8 +123,10 @@ namespace TwitchClipAutodownloader
                         }
                         catch (Exception ex)
                         {
-                            Program.Logging.Log(ex.Message);
-                            Program.Logging.Log(ex.StackTrace);
+                            List<string> msg = new List<string>();
+                            msg.Add(ex.Message);
+                            msg.Add(ex.StackTrace);
+                            Program.Logging.Log(msg);
                         }
                     });
                     // await Task.Delay(60000);
@@ -136,7 +138,9 @@ namespace TwitchClipAutodownloader
                 }
                 catch (Exception ex)
                 {
-                    Program.Logging.Log(ex.Message);
+                    List<string> msg = new List<string>();
+                    msg.Add(ex.Message);
+                    Program.Logging.Log(msg);
                 }
             }
             finally
@@ -292,8 +296,10 @@ namespace TwitchClipAutodownloader
                     }
                     catch (Exception ex)
                     {
-                        Program.Logging.Log(ex.Message);
-                        Program.Logging.Log(ex.StackTrace);
+                        List<string> msg = new List<string>();
+                        msg.Add(ex.Message);
+                        msg.Add(ex.StackTrace);
+                        Program.Logging.Log(msg);
                     }
                     finally
                     {

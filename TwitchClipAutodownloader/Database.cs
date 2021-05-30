@@ -28,7 +28,10 @@ namespace TwitchClipAutodownloader
             }
             catch (Exception ex)
             {
-                Program.Logging.Log(ex.Message);
+                List<string> msg = new List<string>();
+                msg.Add(ex.Message);
+                msg.Add(ex.StackTrace);
+                Program.Logging.Log(msg);
                 Environment.Exit(0);
             }
 
@@ -65,7 +68,10 @@ namespace TwitchClipAutodownloader
             }
             catch (Exception ex)
             {
-                Program.Logging.Log(ex.Message);
+                List<string> msg = new List<string>();
+                msg.Add(ex.Message);
+                msg.Add(ex.StackTrace);
+                Program.Logging.Log(msg);
                 Environment.Exit(0);
             }
             
@@ -93,7 +99,10 @@ namespace TwitchClipAutodownloader
             }
             catch (Exception ex)
             {
-                Program.Logging.Log(ex.Message);
+                List<string> msg = new List<string>();
+                msg.Add(ex.Message);
+                msg.Add(ex.StackTrace);
+                Program.Logging.Log(msg);
                 Environment.Exit(0);
             }
             return result;
@@ -121,7 +130,10 @@ namespace TwitchClipAutodownloader
             }
             catch (Exception ex)
             {
-                Program.Logging.Log(ex.Message);
+                List<string> msg = new List<string>();
+                msg.Add(ex.Message);
+                msg.Add(ex.StackTrace);
+                Program.Logging.Log(msg);
                 Environment.Exit(0);
             }
             return clipExists;

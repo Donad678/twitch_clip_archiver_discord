@@ -3,6 +3,7 @@ using System.IO;
 using Microsoft.Extensions.Configuration;
 using System.Timers;
 using System;
+using System.Collections.Generic;
 
 namespace TwitchClipAutodownloader
 {
@@ -35,7 +36,7 @@ namespace TwitchClipAutodownloader
 
         public async Task MainAsync()
         {
-            log = new Logging(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/log.txt");
+            log = new Logging();
             discord = new Discord();
             await discord.StartDiscordBot(configuration.GetApiKey("Bot_Key"), ulong.Parse(configuration.GetSettings("Discord_Server")), ulong.Parse(configuration.GetSettings("Discord_Channel")));            
             twitch = new Twitch(configuration);
@@ -57,7 +58,9 @@ namespace TwitchClipAutodownloader
                 }
                 catch (Exception ex)
                 {
-                    Logging.Log(ex.Message);
+                    List<string> msg = new List<string>();
+                    msg.Add(ex.Message);
+                    Logging.Log(msg);
                 }
             });           
         }

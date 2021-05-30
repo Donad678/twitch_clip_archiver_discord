@@ -9,32 +9,48 @@ namespace TwitchClipAutodownloader
     {
         private static string path;
         private object _lock = new object();
-        public Logging(string p)
+        public Logging()
         {
-            path = p;
-            if (!File.Exists(p))
-            {
-                FileStream stream = File.Create(p);
-                stream.Close();
-            }
+            path = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/log";
         }
 
-        public void Log(string message)
-        {            
+        public void Log(string messages)
+        {
+            List<string> msg = new List<string>();
+            msg.Add(messages);
+            Log(msg);
+        }
+
+        public void Log(List<string> messages)
+        {
             lock (_lock)
             {
+                string localPath = path + "_" + DateTime.UtcNow.ToString("yyyyMMdd") + ".txt";
+                if (!File.Exists(localPath))
+                {
+                    FileStream stream = File.Create(localPath);
+                    stream.Close();
+                }
                 DateTime currentTime = DateTime.UtcNow;
-                Console.WriteLine(message);
-                using (StreamWriter writer = File.AppendText(path))
+                foreach (string msg in messages)
+                {
+                    Console.WriteLine(msg);
+                }
+                using (StreamWriter writer = File.AppendText(localPath))
                 {
                     writer.AutoFlush = true;
-                    writer.WriteLine("Log Entry");
+                    writer.WriteLine("--- Log Entry ---");
                     writer.WriteLine($"{currentTime.ToLongTimeString()} {DateTime.Now.ToLongDateString()}");
-                    writer.WriteLine($"{message}");
                     writer.WriteLine("---");
+                    foreach (string message in messages)
+                    {
+                        writer.WriteLine($"{message}");
+                        writer.WriteLine("---");
+                    }
+                    writer.WriteLine("--- End of Entry ---");
                 }
             }
-            
+
         }
     }
 }

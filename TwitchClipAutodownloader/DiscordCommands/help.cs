@@ -21,7 +21,7 @@ namespace TwitchClipAutodownloader.DiscordCommands
         [Summary("Shows a list of all available commands per module.")]
         public async Task HelpAsync()
         {
-            var dmChannel = await Context.User.GetOrCreateDMChannelAsync();
+            var dmChannel = await Context.User.CreateDMChannelAsync();
 
             var builder = new EmbedBuilder()
             {
