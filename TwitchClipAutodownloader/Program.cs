@@ -11,7 +11,26 @@ namespace TwitchClipAutodownloader
     {
         private static Discord discord = null;
         private static Logging log = null;
-        private Twitch twitch = null;
+        private static Twitch twitch = null;
+        private static bool skipCheck = false;
+        public static bool SkipCheck
+        {
+            get
+            {
+                return skipCheck;
+            }
+            set
+            {
+                skipCheck = value;
+            }
+        }
+        public static Twitch Twitch
+        {
+            get
+            {
+                return twitch;
+            }
+        }
         public static Logging Logging
         {
             get
@@ -47,20 +66,25 @@ namespace TwitchClipAutodownloader
             timer.Start();
             await Task.Delay(-1);
         }
-
         private async Task Timer_Elapsed(object sender, ElapsedEventArgs e)
         {
             await Task.Run(async () =>
             {
                 try
                 {
-                    twitch.ClipSearch(discord);
+                    if (Program.SkipCheck == false)
+                    {
+                        Program.SkipCheck = true;
+                        twitch.ClipSearch(discord);
+                    }
+                    else
+                    {
+                        Logging.Log("Check Skipped");
+                    }
                 }
                 catch (Exception ex)
                 {
-                    List<string> msg = new List<string>();
-                    msg.Add(ex.Message);
-                    Logging.Log(msg);
+                    Logging.Log(ex.Message);
                 }
             });           
         }

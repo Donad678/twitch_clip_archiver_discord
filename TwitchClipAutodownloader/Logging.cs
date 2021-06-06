@@ -11,7 +11,7 @@ namespace TwitchClipAutodownloader
         private object _lock = new object();
         public Logging()
         {
-            path = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/log";
+            path = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/logs/log";
         }
 
         public void Log(string messages)

@@ -37,7 +37,7 @@ namespace TwitchClipAutodownloader
         /// </summary>
         /// <param name="clientPassthrough"></param>
         /// <param name="configuration"></param>
-        public async void ClipSearch(Discord clientPassthrough)
+        public async void ClipSearch(Discord clientPassthrough, int daysToGoThrough = 0)
         {            
             timeToSearch = Convert.ToInt32(configuration.GetSettings("searchTime"));
             // Initialise Database Class
@@ -90,9 +90,9 @@ namespace TwitchClipAutodownloader
                             {
                                 DoubleCheck = true;
                             }
-                            Task work1 = ConfigClipSearch(database, clientPassthrough, false, currentTime.AddMinutes(-20), DoubleCheck);
-                            Task work2 = ConfigClipSearch(database, clientPassthrough, false, currentTime.AddMinutes(-30), DoubleCheck);
-                            Task work3 = ConfigClipSearch(database, clientPassthrough, false, currentTime.AddMinutes(-40), DoubleCheck);
+                            Task work1 = ConfigClipSearch(database, clientPassthrough, false, currentTime.AddMinutes(-20), DoubleCheck, null, daysToGoThrough);
+                            Task work2 = ConfigClipSearch(database, clientPassthrough, false, currentTime.AddMinutes(-30), DoubleCheck, null, daysToGoThrough);
+                            Task work3 = ConfigClipSearch(database, clientPassthrough, false, currentTime.AddMinutes(-40), DoubleCheck, null, daysToGoThrough);
                             // await ConfigClipSearch(database, configuration, clientPassthrough, false, currentTime);
                             await Task.WhenAll(work1, work2, work3);
                             if (clips.Count > 0)
@@ -138,15 +138,14 @@ namespace TwitchClipAutodownloader
                 }
                 catch (Exception ex)
                 {
-                    List<string> msg = new List<string>();
-                    msg.Add(ex.Message);
-                    Program.Logging.Log(msg);
+                    Program.Logging.Log(ex.Message);
                 }
             }
             finally
             {
                 // No matter what happens, close Database Connection
                 await database.CloseDBConnection();
+                Program.SkipCheck = false;
             }
 
         }
@@ -160,7 +159,7 @@ namespace TwitchClipAutodownloader
         /// <param name="getAllClips"></param>
         /// <param name="wholeDay"></param>
         /// <returns></returns>
-        private async Task ConfigClipSearch(Database database, Discord discord, bool getAllClips, DateTime currentTime, bool wholeDay = false, TwitchClass import = null)
+        private async Task ConfigClipSearch(Database database, Discord discord, bool getAllClips, DateTime currentTime, bool wholeDay = false, TwitchClass import = null, int daysToGoThrough = 0)
         {
             await Task.Run(async () =>
             {
@@ -199,6 +198,10 @@ namespace TwitchClipAutodownloader
                 if (wholeDay)
                 {
                     amountsOfRunningThrough = 96;
+                }
+                if (daysToGoThrough > 0)
+                {
+                    amountsOfRunningThrough = 48 * daysToGoThrough;
                 }
                 do
                 {
@@ -280,7 +283,7 @@ namespace TwitchClipAutodownloader
             YoutubeDL twitchDownload = new YoutubeDL();
             string path = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/clips";
             await database.OpenDBConnection();
-            foreach (ClipInfo clip in clips)
+            foreach (ClipInfo clip in clips.ToList())
             {
                 if (!await database.CheckIfClipAlreadyExists(clip.id))
                 {

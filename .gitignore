@@ -11,3 +11,5 @@
 /TwitchClipAutodownloader/import.json
 /TwitchClipAutodownloader/bin/Release/TwitchClipArchiver
 /TwitchClipAutodownloader/bin/Release/TwitchClipArchiver_hotfix
+/TwitchClipAutodownloader/bin/Release/net5.0
+/TwitchClipAutodownloader/bin/Debug/net5.0

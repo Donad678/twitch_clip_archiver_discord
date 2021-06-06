@@ -72,7 +72,7 @@ namespace TwitchClipAutodownloader
                 int argPos = 0;
                 if (message.Channel.GetType().Name == "SocketDMChannel")
                 {
-                    if (message.Author != client.CurrentUser)
+                    if (message.Author.Id != client.CurrentUser.Id)
                     {
                         var context = new SocketCommandContext(client, message);
                         var result = await commands.ExecuteAsync(context, argPos, services);

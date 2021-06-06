@@ -12,9 +12,38 @@ using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace TwitchClipAutodownloader.DiscordCommands
-{
+{    
     public class DiscordUpload : ModuleBase<SocketCommandContext>
     {
+
+        [Command("getDays")]
+        [Summary("Checks through a given amount of days")]
+        public async Task GoThroughNumberOfDays([Remainder] string daysString)
+        {
+            if (Context.User.Id == ulong.Parse(Program.configuration.GetSettings("Developer")))
+            {
+                int days = 0;
+                if (int.TryParse(daysString, out days))
+                {
+                    Program.SkipCheck = true;
+                    await Task.Run(async () =>
+                    {
+                        await Context.Message.ReplyAsync("Start to get Days");
+                        Program.Twitch.ClipSearch(Program.Discord, days);                        
+                    });
+                    
+                }
+                else
+                {
+                    await Context.Message.ReplyAsync("Insert Days as Number");
+                }
+            }
+            else
+            {
+                await Context.Message.ReplyAsync("You don't have the permission to use this command");
+            }            
+        }
+
         private bool ignoreDB = false;
         [Command("reupload")]
         [Alias("reup", "re")]
