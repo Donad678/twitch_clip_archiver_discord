@@ -104,9 +104,9 @@ namespace TwitchClipAutodownloader
             SocketGuild server = client.GetGuild(ServerId) as SocketGuild;
             // Get Channel to send clips to
             SocketTextChannel channel = server.GetChannel(ChannelId) as SocketTextChannel;
-            IDisposable typing = channel.EnterTypingState();
+            // [obsolete FS] IDisposable typing = channel.EnterTypingState();
             await channel.SendFileAsync(filepath, "", false, CreateEmbed(clip));
-            typing.Dispose();
+            // [obsolete FS] typing.Dispose();
         }
         /// <summary>
         /// Shutdown the Bot

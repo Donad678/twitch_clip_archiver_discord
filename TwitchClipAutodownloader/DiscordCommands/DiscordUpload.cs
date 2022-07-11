@@ -78,7 +78,7 @@ namespace TwitchClipAutodownloader.DiscordCommands
             SocketTextChannel channel = server.GetChannel(ulong.Parse(Program.configuration.GetSettings("Discord_Channel"))) as SocketTextChannel;
             Database database = new Database(Program.configuration.GetConnectionString("Clips"));
             string clipId = "";
-            IDisposable typingDM = Context.Channel.EnterTypingState();
+            // [obsolete FS] IDisposable typingDM = Context.Channel.EnterTypingState();
             await Context.Channel.SendMessageAsync("Now starting upload of " + links.Count + " clip/s");
             try
             {
@@ -120,10 +120,10 @@ namespace TwitchClipAutodownloader.DiscordCommands
                                         {
                                             twitchDownload.Options.FilesystemOptions.Output = tempPath;
                                             twitchDownload.VideoUrl = clip.url;
-                                            IDisposable typing = channel.EnterTypingState();
+                                            // [obsolete FS] IDisposable typing = channel.EnterTypingState();
                                             await twitchDownload.DownloadAsync();
                                             await channel.SendFileAsync(tempPath, "", false, CreateEmbed(clip));
-                                            typing.Dispose();
+                                            // [obsolete FS] typing.Dispose();
 
                                             await database.ClipToDatabase(clip);
                                             await Context.Channel.SendMessageAsync("Clip " + clip.id + " uploaded successfully");
@@ -169,8 +169,8 @@ namespace TwitchClipAutodownloader.DiscordCommands
             catch (Exception ex)
             {
                 Program.Logging.Log(ex.Message + "\n" + ex.StackTrace);
-            }            
-            typingDM.Dispose();
+            }
+            // [obsolete FS] typingDM.Dispose();
             await Context.Channel.SendMessageAsync("Finished");
         }
         /// <summary>
